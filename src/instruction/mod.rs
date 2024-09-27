@@ -1,12 +1,12 @@
 use std::sync::LazyLock;
 
-use crate::cpu::Cpu;
+use crate::cpu::{Cpu, InstExecResult};
 
 mod format;
 mod rv32i;
 
 const OPCODE_SIZE: usize = 1 << 5;
-type InsImpl = fn(u32, &mut Cpu);
+type InsImpl = fn(u32, &mut Cpu) -> InstExecResult;
 
 #[derive(Clone, Copy)]
 pub struct Instruction(pub u32);
@@ -18,7 +18,7 @@ impl Instruction {
 
 pub fn instruction_array() -> &'static [InsImpl; OPCODE_SIZE] {
     static GATHERED: LazyLock<[InsImpl; OPCODE_SIZE]> = LazyLock::new(|| {
-        let mut arr = [nop as fn(u32, &mut Cpu); OPCODE_SIZE];
+        let mut arr = [nop as fn(u32, &mut Cpu) -> InstExecResult; OPCODE_SIZE];
         for (opcode, ins_impl) in rv32i::OPCODE2INS_IMPL.iter() {
             arr[*opcode as usize] = *ins_impl;
         }
@@ -27,8 +27,8 @@ pub fn instruction_array() -> &'static [InsImpl; OPCODE_SIZE] {
     &*GATHERED
 }
 
-pub fn nop(_: u32, _: &mut Cpu) {
-
+pub fn nop(_: u32, _: &mut Cpu) -> InstExecResult {
+    InstExecResult::Ok
 }
 
 fn low_bitmask_u8(cnt: usize) -> u8 {
@@ -36,7 +36,7 @@ fn low_bitmask_u8(cnt: usize) -> u8 {
     (1 << cnt) - 1
 }
 
-fn low_bitmask_u32(cnt: usize) -> u32 {
+const fn low_bitmask_u32(cnt: usize) -> u32 {
     assert!(cnt < 32);
     (1 << cnt) - 1
 }
