@@ -1155,7 +1155,10 @@ mod tests {
         cpu.pc = 100;
         let code = assemble(
             r#"
-        jal x18, 8
+            jal x18, target
+            nop
+            target:
+            nop
         "#,
         )?;
         cpu.execute(&code)?;
